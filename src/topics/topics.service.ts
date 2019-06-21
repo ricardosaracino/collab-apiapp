@@ -17,6 +17,10 @@ export class TopicsService {
         return await createdTopic.save();
     }
 
+    async update(id: string, createTopicDto: CreateTopicDto): Promise<Topic> {
+        return await this.TopicModel.findOneAndUpdate({_id: Types.ObjectId(id)}, createTopicDto).exec();
+    }
+
     async findAll(): Promise<Topic[]> {
         return await this.TopicModel.find().exec();
     }
