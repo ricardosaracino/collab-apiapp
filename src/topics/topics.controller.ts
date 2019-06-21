@@ -1,7 +1,6 @@
-import {Body, Controller, Get, Param, Post} from '@nestjs/common';
-import {ApiOperation, ApiUseTags} from '@nestjs/swagger';
-import {CreateCommentDto} from './dto/create-comment.dto';
-import {CreateTopicDto} from './dto/create-topic.dto';
+import {Body, Controller, Delete, Get, Param, Post} from '@nestjs/common';
+import {ApiOperation, ApiResponse, ApiUseTags} from '@nestjs/swagger';
+import {CreateCommentDto, CreateTopicDto, ResponseTopicDto} from './dto';
 import {Topic} from './interfaces';
 import {TopicsService} from './topics.service';
 
@@ -14,14 +13,22 @@ export class TopicsController {
 
     @Post()
     @ApiOperation({title: 'Create Topic'})
-    async create(@Body() createTopicDto: CreateTopicDto) {
+    @ApiResponse({status: 200, type: ResponseTopicDto})
+    async create(@Body() createTopicDto: CreateTopicDto): Promise<Topic> {
         return await this.TopicsService.create(createTopicDto);
     }
 
     @Post(':topicId')
     @ApiOperation({title: 'Update Topic'})
-    async update(@Param('topicId') topicId: string, @Body() createTopicDto: CreateTopicDto) {
+    @ApiResponse({status: 200, type: ResponseTopicDto})
+    async update(@Param('topicId') topicId: string, @Body() createTopicDto: CreateTopicDto): Promise<Topic> {
         return await this.TopicsService.update(topicId, createTopicDto);
+    }
+
+    @Delete(':topicId')
+    @ApiOperation({title: 'Delete Topic'})
+    async delete(@Param('topicId') topicId: string) {
+        return await this.TopicsService.delete(topicId);
     }
 
     @Get(':topicId')

@@ -1,8 +1,7 @@
 import {Injectable} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
 import {Model, Types} from 'mongoose';
-import {CreateCommentDto} from './dto/create-comment.dto';
-import {CreateTopicDto} from './dto/create-topic.dto';
+import {CreateCommentDto, CreateTopicDto} from './dto';
 import {Comment, Topic} from './interfaces';
 
 @Injectable()
@@ -17,8 +16,16 @@ export class TopicsService {
         return await createdTopic.save();
     }
 
+    /**
+     * todo (node:11000) DeprecationWarning: Mongoose: `findOneAndUpdate()` and `findOneAndDelete()` without the
+     * todo `useFindAndModify` option set to false are deprecated. See: https://mongoosejs.com/docs/deprecations.html#-findandmodify-
+     */
     async update(id: string, createTopicDto: CreateTopicDto): Promise<Topic> {
         return await this.TopicModel.findOneAndUpdate({_id: Types.ObjectId(id)}, createTopicDto).exec();
+    }
+
+    async delete(id: string): Promise<Topic> {
+        return await this.TopicModel.findOneAndRemove({_id: Types.ObjectId(id)}).exec();
     }
 
     async findAll(): Promise<Topic[]> {
