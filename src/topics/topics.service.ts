@@ -1,7 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
 import {Model, Types} from 'mongoose';
-import {CreateCommentDto, CreateTopicDto} from './dto';
 import {Comment, Topic} from './interfaces';
 
 @Injectable()
@@ -11,8 +10,8 @@ export class TopicsService {
                 @InjectModel('Comment') private readonly CommentModel: Model<Comment>) {
     }
 
-    async create(createTopicDto: CreateTopicDto): Promise<Topic> {
-        const createdTopic = new this.TopicModel(createTopicDto);
+    async create(topic: Topic): Promise<Topic> {
+        const createdTopic = new this.TopicModel(topic);
         return await createdTopic.save();
     }
 
@@ -20,8 +19,8 @@ export class TopicsService {
      * todo (node:11000) DeprecationWarning: Mongoose: `findOneAndUpdate()` and `findOneAndDelete()` without the
      * todo `useFindAndModify` option set to false are deprecated. See: https://mongoosejs.com/docs/deprecations.html#-findandmodify-
      */
-    async update(id: string, createTopicDto: CreateTopicDto): Promise<Topic> {
-        return await this.TopicModel.findOneAndUpdate({_id: Types.ObjectId(id)}, createTopicDto).exec();
+    async update(id: string, topic: Topic): Promise<Topic> {
+        return await this.TopicModel.findOneAndUpdate({_id: Types.ObjectId(id)}, topic).exec();
     }
 
     async delete(id: string): Promise<Topic> {
@@ -36,17 +35,41 @@ export class TopicsService {
         return await this.TopicModel.findById(Types.ObjectId(id)).exec();
     }
 
-    async createComment(topicId: string, createCommentDto: CreateCommentDto): Promise<Comment> {
+    async createComment(topicId: string, comment: Comment): Promise<Comment> {
 
         const createdComment = new this.CommentModel({
             ...{topic_id: Types.ObjectId(topicId)},
-            ...createCommentDto,
+            ...comment,
         });
 
         return await createdComment.save();
     }
 
+    async createCommentReply(topicId: string, parentId: string, comment: Comment): Promise<Comment> {
+
+        const createdComment = new this.CommentModel({
+            ...{topic_id: Types.ObjectId(topicId)},
+            ...{parent_id: Types.ObjectId(parentId)},
+            ...comment,
+        });
+
+        comment = await createdComment.save();
+
+        await this.CommentModel.updateOne({_id: Types.ObjectId(parentId)}, {
+            $push: {
+                comments: {$each: [comment._id], $position: 0},
+            },
+        }).exec();
+
+        return comment;
+    }
+
     async findAllComments(topicId): Promise<Comment[]> {
-        return await this.CommentModel.find({topic_id: topicId}).exec();
+
+        return await this.CommentModel.find({topic_id: topicId, parent_id: null})
+            .populate({
+                path: 'comments',
+                populate: {path: 'comments', populate: {path: 'comments', populate: {path: 'comments'}}},
+            }).sort({createdAt: -1}).exec();
     }
 }

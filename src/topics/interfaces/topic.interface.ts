@@ -1,7 +1,8 @@
-import {Document} from 'mongoose';
+import {Document, Types} from 'mongoose';
 
 export interface Topic extends Document {
-    readonly title: string;
-    readonly description: string;
-    readonly createdAt: Date;
+    readonly _id?: Types.ObjectId;
+    readonly title?: string;
+    readonly description?: string;
+    readonly createdAt?: Date;
 }

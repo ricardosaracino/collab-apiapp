@@ -1,8 +1,8 @@
 import {ApiModelProperty} from '@nestjs/swagger';
 import {Expose} from 'class-transformer';
 
-export class CreateCommentDto {
+export class LoginAuthDto {
     @Expose()
     @ApiModelProperty()
-    readonly text: string;
+    readonly username: string;
 }

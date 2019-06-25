@@ -1,6 +1,7 @@
-import {Document} from 'mongoose';
+import {Document, Types} from 'mongoose';
 
 export interface Comment extends Document {
-    readonly text: string;
-    readonly createdAt: Date;
+    readonly _id?: Types.ObjectId;
+    readonly text?: string;
+    readonly createdAt?: Date;
 }
