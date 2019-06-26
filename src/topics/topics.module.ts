@@ -10,8 +10,8 @@ import {TopicsService} from './topics.service';
         {name: 'Topic', schema: TopicSchema},
         {name: 'Comment', schema: CommentSchema},
     ])],
-    exports: [TopicsService],
     providers: [TopicsService],
+    exports: [TopicsService],
     controllers: [TopicsController],
 })
 export class TopicsModule {

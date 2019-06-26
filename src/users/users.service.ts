@@ -9,16 +9,12 @@ export class UsersService {
     constructor(@InjectModel('User') private readonly UserModel: Model<User>) {
     }
 
-    async create(user: User): Promise<User> {
-//        const createdTopic = new this.UserModel(user);
-//        return await createdTopic.save();
-
-        return user;
+    async registerOAuthUser(user: User): Promise<User> {
+        const createdUser = new this.UserModel(user);
+        return await createdUser.save();
     }
 
-    async findByUserName(username: string): Promise<User> {
-//        return await this.UserModel.findOne({username}).exec();
-
-        return {} as any as User;
+    async findOneByThirdPartyId(thirdPartyId: string): Promise<User> {
+        return await this.UserModel.findOne({thirdPartyId}).exec();
     }
 }

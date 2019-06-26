@@ -12,6 +12,9 @@ export class ResponseCommentDto {
     readonly parent_id: string;
 
     @ApiModelProperty()
+    readonly comments: Comment[];
+
+    @ApiModelProperty()
     readonly text: string;
 
     @ApiModelProperty()

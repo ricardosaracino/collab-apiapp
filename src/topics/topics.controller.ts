@@ -1,7 +1,7 @@
 import {Body, Controller, Delete, Get, Param, Post} from '@nestjs/common';
 import {ApiOperation, ApiResponse, ApiUseTags} from '@nestjs/swagger';
-import {CreateCommentDto, CreateTopicDto, ResponseTopicDto} from './dto';
-import {Topic} from './interfaces';
+import {CreateCommentDto, CreateTopicDto, ResponseCommentDto, ResponseTopicDto} from './dto';
+import {Comment, Topic} from './interfaces';
 import {TopicsService} from './topics.service';
 
 @ApiUseTags('Collab')
@@ -33,31 +33,36 @@ export class TopicsController {
 
     @Get(':topicId')
     @ApiOperation({title: 'Find Topic by Id'})
+    @ApiResponse({status: 200, type: ResponseTopicDto})
     async findById(@Param('topicId') topicId: string): Promise<Topic> {
         return this.topicsService.findById(topicId);
     }
 
     @Get()
     @ApiOperation({title: 'Find All Topics'})
+    @ApiResponse({status: 200, type: ResponseTopicDto, isArray: true})
     async findAll(): Promise<Topic[]> {
         return this.topicsService.findAll();
     }
 
     @Post(':topicId/comments')
     @ApiOperation({title: 'Create a Comment on a Topic'})
+    @ApiResponse({status: 200, type: ResponseCommentDto})
     async createComment(@Param('topicId') topicId: string, @Body() createCommentDto: CreateCommentDto) {
         return await this.topicsService.createComment(topicId, createCommentDto);
     }
 
     @Post(':topicId/comments/:parentId')
     @ApiOperation({title: 'Create a Comment on a Comment'})
+    @ApiResponse({status: 200, type: ResponseCommentDto})
     async createCommentReply(@Param('topicId') topicId: string, @Param('parentId') parentId: string, @Body() createCommentDto: CreateCommentDto) {
         return await this.topicsService.createCommentReply(topicId, parentId, createCommentDto);
     }
 
     @Get(':topicId/comments')
     @ApiOperation({title: 'Find all Comments on a Topic'})
-    async findAllComments(@Param('topicId') topicId: string) {
+    @ApiResponse({status: 200, type: ResponseCommentDto, isArray: true})
+    async findAllComments(@Param('topicId') topicId: string): Promise<Comment[]> {
         return await this.topicsService.findAllComments(topicId);
     }
 }
