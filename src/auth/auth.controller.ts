@@ -23,14 +23,15 @@ export class AuthController {
     loginCallback(@Req() req, @Res() res) {
         // handles the OAuth2 callback
         const jwt: string = req.user.jwt;
-        if (jwt)
-            res.redirect('http://localhost:4200/login/succes/' + jwt);
-        else
+        if (jwt) {
+            res.redirect(`http://localhost:4200/login/success/${jwt}?redirect=/topic/5d0cdb2469c2b91b20d5b024/comments`);
+        } else {
             res.redirect('http://localhost:4200/login/failure');
+        }
     }
 
     @Get('protected')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard())
     protectedResource() {
         return 'JWT is working!';
     }
