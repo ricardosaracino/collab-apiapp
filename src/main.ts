@@ -11,6 +11,7 @@ async function bootstrap() {
         .setTitle('Collab example')
         .setDescription('The Collab API')
         .setVersion('1.0')
+        .addBearerAuth('Authorization', 'header')
         .build();
     const document = SwaggerModule.createDocument(app, options);
     SwaggerModule.setup('api', app, document);

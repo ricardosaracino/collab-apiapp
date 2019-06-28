@@ -1,7 +1,6 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common';
-import {sign} from 'jsonwebtoken';
-import {JWT_SECRET_KEY} from '../../constants';
-import {User} from '../users/interfaces/user.interface';
+import {JwtService} from '@nestjs/jwt';
+import {IUser} from '../users/interfaces/user.interface';
 import {UsersService} from '../users/users.service';
 
 
@@ -11,25 +10,32 @@ export class AuthService {
     /**
      * https://github.com/nielsmeima/nestjs-angular-auth/blob/master/back-end/src/auth/auth.service.ts
      */
-    constructor(private readonly usersService: UsersService) {
+    constructor(private readonly usersService: UsersService,
+                private readonly jwtService: JwtService) {
     }
 
     /**
-     * returns JWT User object
+     * returns JWT IUser object
      */
-    public async validateOAuthLogin(oauthUser: User): Promise<string> {
+    public async validateOAuthLogin(oauthUser: IUser): Promise<string> {
         try {
-            let user: User = await this.usersService.findOneByThirdPartyId(oauthUser.thirdPartyId);
+            let user: IUser = await this.usersService.findOneByThirdPartyId(oauthUser.thirdPartyId);
 
             if (!user) {
                 user = await this.usersService.registerOAuthUser(oauthUser);
             }
 
-            // jwt
-            return sign((user as any).toObject(), JWT_SECRET_KEY, {expiresIn: 3600});
+            return this.jwtService.signAsync((user as any).toObject()); // await if not returning
 
         } catch (err) {
             throw new InternalServerErrorException('validateOAuthLogin', err.message);
         }
+    }
+
+
+    public async validatePayload(payload: IUser): Promise<IUser> {
+        console.log(payload);
+
+        return payload;
     }
 }

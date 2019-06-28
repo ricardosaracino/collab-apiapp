@@ -3,9 +3,10 @@ import {PassportStrategy} from '@nestjs/passport';
 import {ExtractJwt, Strategy} from 'passport-jwt';
 import {JWT_SECRET_KEY} from '../../constants';
 import {AuthService} from './auth.service';
+import {JwtPayload} from './interfaces/jwt-payload.interface';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class JwtStrategy extends PassportStrategy(Strategy) {
 
     /**
      * https://github.com/nielsmeima/nestjs-angular-auth/blob/master/back-end/src/auth/jwt.strategy.ts
@@ -17,18 +18,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         });
     }
 
-    async validate(payload, done: Function) {
-        try {
-            // You could add a function to the authService to verify the claims of the token:
-            // i.e. does the user still have the roles that are claimed by the token
-            //const validClaims = await this.authService.verifyTokenClaims(payload);
-
-            //if (!validClaims)
-            //    return done(new UnauthorizedException('invalid token claims'), false);
-
-            done(null, payload);
-        } catch (err) {
-            throw new UnauthorizedException('unauthorized', err.message);
+    /**
+     * @param payload
+     * @param done
+     */
+    async validate(payload: JwtPayload, done: Function) {
+        const user = await this.authService.validatePayload(payload); // Payload is a user
+        if (!user) {
+            return done(new UnauthorizedException(), false);
         }
+        done(null, user);
     }
 }

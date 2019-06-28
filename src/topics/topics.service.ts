@@ -1,17 +1,25 @@
-import {Injectable} from '@nestjs/common';
+import {Injectable, UseGuards} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
+import {AuthGuard} from '@nestjs/passport';
 import {Model, Types} from 'mongoose';
-import {Comment, Topic} from './interfaces';
+import {JwtAuthGuard} from '../auth/jwt-auth.guard';
+import {IUser} from '../users/interfaces/user.interface';
+import {IComment, ITopic} from './interfaces';
 
 @Injectable()
 export class TopicsService {
 
-    constructor(@InjectModel('Topic') private readonly TopicModel: Model<Topic>,
-                @InjectModel('Comment') private readonly CommentModel: Model<Comment>) {
+    constructor(@InjectModel('Topic') private readonly TopicModel: Model<ITopic>,
+                @InjectModel('Comment') private readonly CommentModel: Model<IComment>) {
     }
 
-    async create(topic: Topic): Promise<Topic> {
-        const createdTopic = new this.TopicModel(topic);
+    async create(topic: ITopic, user: IUser): Promise<ITopic> {
+
+        const createdTopic = new this.TopicModel({
+            ...topic,
+            ...{createdBy: {id: Types.ObjectId(user._id), name: user.name}},
+        });
+
         return await createdTopic.save();
     }
 
@@ -19,38 +27,45 @@ export class TopicsService {
      * todo (node:11000) DeprecationWarning: Mongoose: `findOneAndUpdate()` and `findOneAndDelete()` without the
      * todo `useFindAndModify` option set to false are deprecated. See: https://mongoosejs.com/docs/deprecations.html#-findandmodify-
      */
-    async update(id: string, topic: Topic): Promise<Topic> {
+    async update(id: string, topic: ITopic): Promise<ITopic> {
         return await this.TopicModel.findOneAndUpdate({_id: Types.ObjectId(id)}, topic).exec();
     }
 
-    async delete(id: string): Promise<Topic> {
+    async delete(id: string): Promise<ITopic> {
         return await this.TopicModel.findOneAndRemove({_id: Types.ObjectId(id)}).exec();
     }
 
-    async findAll(): Promise<Topic[]> {
+    async findAll(): Promise<ITopic[]> {
         return await this.TopicModel.find().exec();
     }
 
-    async findById(id: string): Promise<Topic> {
-        return await this.TopicModel.findById(Types.ObjectId(id)).exec();
+    async findById(id: string): Promise<ITopic> {
+        const topic = await this.TopicModel.findById(Types.ObjectId(id)).exec();
+
+        return topic;
     }
 
-    async createComment(topicId: string, comment: Comment): Promise<Comment> {
+    @UseGuards(JwtAuthGuard)
+    async createComment(topicId: string, comment: IComment, user: IUser): Promise<IComment> {
 
         const createdComment = new this.CommentModel({
             ...{topic_id: Types.ObjectId(topicId)},
             ...comment,
+            ...{createdBy: {id: Types.ObjectId(user._id), name: user.name}},
+
         });
 
         return await createdComment.save();
     }
 
-    async createCommentReply(topicId: string, parentId: string, comment: Comment): Promise<Comment> {
+    @UseGuards(AuthGuard('jwt'))
+    async createCommentReply(topicId: string, parentId: string, comment: IComment, user: IUser): Promise<IComment> {
 
         const createdComment = new this.CommentModel({
             ...{topic_id: Types.ObjectId(topicId)},
             ...{parent_id: Types.ObjectId(parentId)},
             ...comment,
+            ...{createdBy: {id: Types.ObjectId(user._id), name: user.name}},
         });
 
         comment = await createdComment.save();
@@ -64,7 +79,7 @@ export class TopicsService {
         return comment;
     }
 
-    async findAllComments(topicId): Promise<Comment[]> {
+    async findAllComments(topicId): Promise<IComment[]> {
 
         return await this.CommentModel.find({topic_id: topicId, parent_id: null})
             .populate({

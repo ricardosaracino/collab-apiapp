@@ -2,11 +2,11 @@ import {Injectable} from '@nestjs/common';
 import {PassportStrategy} from '@nestjs/passport';
 import {decode} from 'jsonwebtoken';
 import {Strategy} from 'passport-azure-ad-oauth2';
-import {User} from '../users/interfaces/user.interface';
+import {IUser} from '../users/interfaces/user.interface';
 import {AuthService} from './auth.service';
 
 @Injectable()
-export class AzureStrategy extends PassportStrategy(Strategy) {
+export class AzureStrategy extends PassportStrategy(Strategy, 'azure') {
 
     /**
      * https://github.com/auth0/passport-azure-ad-oauth2#passport-azure-ad-oauth2
@@ -27,9 +27,9 @@ export class AzureStrategy extends PassportStrategy(Strategy) {
 
         try {
 
-            const profile = decode(profileJwt);
+            const profile = decode(profileJwt) as any;
 
-            const oauthUser: User = {
+            const oauthUser: IUser = {
                 thirdPartyId: profile.oid,
                 name: profile.name,
                 email: profile.upn,
