@@ -49,6 +49,7 @@ export class TopicsController {
         return this.topicsService.findAll();
     }
 
+    // create gaurd
     @Post(':topicId/comments')
     @ApiOperation({title: 'Create a Comment on a Topic'})
     @ApiResponse({status: 200, type: ResponseCommentDto})
