@@ -5,6 +5,10 @@ export const CommentSchema = new mongoose.Schema({
     parent_id: {type: 'ObjectId', ref: 'Comment', index: true},
     comments: [{type: 'ObjectId', ref: 'Comment', index: true}],
     text: {type: String, required: true},
-    createdAt: {type: Date, default: Date.now},
+
     createdBy: {type: {id: {type: 'ObjectId', ref: 'User'}, name: String}},
+    createdAt: {type: Date, default: Date.now},
+    modifiedAt: {type: Date, default: Date.now},
+
+    updateHistory: [{text: {type: String, required: true}, updatedAt: {type: Date}}],
 });

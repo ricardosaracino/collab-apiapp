@@ -1,8 +1,6 @@
-import {Injectable, UseGuards} from '@nestjs/common';
+import {ForbiddenException, Injectable, NotFoundException} from '@nestjs/common';
 import {InjectModel} from '@nestjs/mongoose';
-import {AuthGuard} from '@nestjs/passport';
 import {Model, Types} from 'mongoose';
-import {JwtAuthGuard} from '../auth/jwt-auth.guard';
 import {IUser} from '../users/interfaces/user.interface';
 import {IComment, ITopic} from './interfaces';
 
@@ -40,12 +38,9 @@ export class TopicsService {
     }
 
     async findById(id: string): Promise<ITopic> {
-        const topic = await this.TopicModel.findById(Types.ObjectId(id)).exec();
-
-        return topic;
+        return await this.TopicModel.findById(Types.ObjectId(id)).exec();
     }
 
-    @UseGuards(JwtAuthGuard)
     async createComment(topicId: string, comment: IComment, user: IUser): Promise<IComment> {
 
         const createdComment = new this.CommentModel({
@@ -58,8 +53,14 @@ export class TopicsService {
         return await createdComment.save();
     }
 
-    @UseGuards(AuthGuard('jwt'))
     async createCommentReply(topicId: string, parentId: string, comment: IComment, user: IUser): Promise<IComment> {
+
+        // todo exists
+        const parentExists = await this.CommentModel.findById(Types.ObjectId(parentId)).select({_id: 1}).then(doc => !!doc);
+
+        if (!parentExists) {
+            throw new NotFoundException();
+        }
 
         const createdComment = new this.CommentModel({
             ...{topic_id: Types.ObjectId(topicId)},
@@ -70,13 +71,48 @@ export class TopicsService {
 
         comment = await createdComment.save();
 
-        await this.CommentModel.updateOne({_id: Types.ObjectId(parentId)}, {
+        // this will pass regardless of the update being "successful"
+        const res = await this.CommentModel.updateOne({_id: Types.ObjectId(parentId)}, {
             $push: {
                 comments: {$each: [comment._id], $position: 0},
             },
         }).exec();
 
         return comment;
+    }
+
+    async updateComment(commentId: string, comment: IComment, user: IUser): Promise<boolean> {
+
+        const oldComment: IComment = await this.CommentModel.findById(Types.ObjectId(commentId)).exec();
+
+        if (!oldComment) {
+            throw new NotFoundException();
+        }
+
+        if (user._id !== oldComment.createdBy.id.toString()) {
+            throw new ForbiddenException();
+        }
+
+        await this.CommentModel.updateOne({_id: Types.ObjectId(commentId)}, {
+
+            text: comment.text,
+
+            modifiedAt: new Date(),
+
+            $push: {
+                updateHistory: {$each: [{text: oldComment.text, updatedAt: oldComment.modifiedAt}], $position: 0},
+            },
+
+        }).exec();
+
+        // todo probably a better way to do this
+        // todo this has no children
+        return await this.CommentModel.findById(Types.ObjectId(commentId)).exec();
+    }
+
+    async deleteComment(commentId: string, user: IUser): Promise<boolean> {
+
+        return await this.CommentModel.updateOne({_id: Types.ObjectId(commentId)}, {}).exec();
     }
 
     async findAllComments(topicId): Promise<IComment[]> {

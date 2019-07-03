@@ -1,5 +1,5 @@
 import {Body, Controller, Delete, Get, Param, Post, UseGuards} from '@nestjs/common';
-import {ApiOperation, ApiResponse, ApiUseTags} from '@nestjs/swagger';
+import {ApiBearerAuth, ApiOperation, ApiResponse, ApiUseTags} from '@nestjs/swagger';
 import {JwtAuthGuard} from '../auth/jwt-auth.guard';
 import {User} from '../auth/user.decorator';
 import {IUser} from '../users/interfaces/user.interface';
@@ -8,6 +8,8 @@ import {IComment, ITopic} from './interfaces';
 import {TopicsService} from './topics.service';
 
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+
 @Controller('topics')
 @ApiUseTags('Collab')
 export class TopicsController {
@@ -49,7 +51,6 @@ export class TopicsController {
         return this.topicsService.findAll();
     }
 
-    // create gaurd
     @Post(':topicId/comments')
     @ApiOperation({title: 'Create a Comment on a Topic'})
     @ApiResponse({status: 200, type: ResponseCommentDto})
@@ -57,11 +58,25 @@ export class TopicsController {
         return await this.topicsService.createComment(topicId, createCommentDto, user);
     }
 
-    @Post(':topicId/comments/:parentId')
+    @Post(':topicId/comments/:commentId/comments')
     @ApiOperation({title: 'Create a Comment on a Comment'})
     @ApiResponse({status: 200, type: ResponseCommentDto})
-    async createCommentReply(@User() user: IUser, @Param('topicId') topicId: string, @Param('parentId') parentId: string, @Body() createCommentDto: CreateCommentDto) {
+    async createCommentReply(@User() user: IUser, @Param('topicId') topicId: string, @Param('commentId') parentId: string, @Body() createCommentDto: CreateCommentDto) {
         return await this.topicsService.createCommentReply(topicId, parentId, createCommentDto, user);
+    }
+
+    @Post(':topicId/comments/:commentId')
+    @ApiOperation({title: 'Update a Comment'})
+    @ApiResponse({status: 200, type: ResponseCommentDto})
+    async updateComment(@User() user: IUser, @Param('topicId') topicId: string, @Param('commentId') commentId: string, @Body() createCommentDto: CreateCommentDto) {
+        return await this.topicsService.updateComment(commentId, createCommentDto, user);
+    }
+
+    @Delete(':topicId/comments/:commentId')
+    @ApiOperation({title: 'Delete a Comment'})
+    @ApiResponse({status: 200, type: ResponseCommentDto})
+    async deleteComment(@User() user: IUser, @Param('topicId') topicId: string, @Param('commentId') commentId: string) {
+        return await this.topicsService.deleteComment(commentId, user);
     }
 
     @Get(':topicId/comments')

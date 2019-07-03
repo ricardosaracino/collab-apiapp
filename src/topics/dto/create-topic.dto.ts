@@ -1,15 +1,18 @@
 import {ApiModelProperty} from '@nestjs/swagger';
-import {Expose} from 'class-transformer';
+import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty} from 'class-validator';
 
 export class CreateTopicDto {
-    @IsNotEmpty()
+
     @Expose()
+    @IsNotEmpty()
     @ApiModelProperty()
+    @Transform((value: string) => value.trim())
     readonly title: string;
 
-    @IsNotEmpty()
     @Expose()
+    @IsNotEmpty()
     @ApiModelProperty()
+    @Transform((value: string) => value.trim())
     readonly description: string;
 }

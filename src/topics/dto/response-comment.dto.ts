@@ -1,4 +1,6 @@
 import {ApiModelProperty} from '@nestjs/swagger';
+import {IUser} from '../../users/interfaces/user.interface';
+import {IComment} from '../interfaces';
 
 export class ResponseCommentDto {
 
@@ -12,11 +14,17 @@ export class ResponseCommentDto {
     readonly parent_id: string;
 
     @ApiModelProperty()
-    readonly comments: Comment[];
+    readonly comments: IComment[];
 
     @ApiModelProperty()
     readonly text: string;
 
     @ApiModelProperty()
+    readonly createdBy: IUser;
+
+    @ApiModelProperty()
     readonly createdAt: string;
+
+    @ApiModelProperty()
+    readonly modifiedAt: string;
 }

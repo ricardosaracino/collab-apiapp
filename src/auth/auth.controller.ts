@@ -29,7 +29,7 @@ export class AuthController {
         console.log(jwt);
 
         if (jwt) {
-            res.redirect(`http://localhost:4200/login/success/${jwt}?redirect=/topic/5d0cdb2469c2b91b20d5b024/comments`);
+            res.redirect(`http://localhost:4200/login/success/${jwt}?redirect=/topic/5d1c9b8e7badd01120b997f9/comments`);
         } else {
             res.redirect('http://localhost:4200/login/failure');
         }
