@@ -3,7 +3,7 @@ import {ApiBearerAuth, ApiOperation, ApiResponse, ApiUseTags} from '@nestjs/swag
 import {JwtAuthGuard} from '../auth/jwt-auth.guard';
 import {User} from '../auth/user.decorator';
 import {IUser} from '../users/interfaces/user.interface';
-import {CreateCommentDto, CreateTopicDto, ResponseCommentDto, ResponseTopicDto} from './dto';
+import {CreateCommentDto, CreateTopicDto, ResponseCommentDto, ResponseTopicDto, VoteCommentDto} from './dto';
 import {IComment, ITopic} from './interfaces';
 import {TopicsService} from './topics.service';
 
@@ -63,6 +63,14 @@ export class TopicsController {
     @ApiResponse({status: 200, type: ResponseCommentDto})
     async createCommentReply(@User() user: IUser, @Param('topicId') topicId: string, @Param('commentId') parentId: string, @Body() createCommentDto: CreateCommentDto) {
         return await this.topicsService.createCommentReply(topicId, parentId, createCommentDto, user);
+    }
+
+
+    @Post(':topicId/comments/:commentId/vote')
+    @ApiOperation({title: 'Vote on a Comment'})
+    @ApiResponse({status: 200, type: ResponseCommentDto})
+    async voteComment(@User() user: IUser, @Param('topicId') topicId: string, @Param('commentId') commentId: string, @Body() voteCommentDto: VoteCommentDto) {
+        return await this.topicsService.voteComment(commentId, voteCommentDto, user);
     }
 
     @Post(':topicId/comments/:commentId')

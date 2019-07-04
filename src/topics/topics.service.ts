@@ -81,6 +81,44 @@ export class TopicsService {
         return comment;
     }
 
+
+    async voteComment(commentId: string, vote: { vote: '+1' | '-1' }, user: IUser): Promise<IComment> {
+
+        // todo exists
+        const commentExists = await this.CommentModel.findById(Types.ObjectId(commentId)).select({_id: 1}).then(doc => !!doc);
+
+        if (!commentExists) {
+            throw new NotFoundException();
+        }
+
+        if (vote.vote === '+1') {
+            await this.CommentModel.updateOne({_id: Types.ObjectId(commentId)}, {
+                $addToSet: {
+                    upVotes: {id: user._id, name: user.name},
+                },
+                $pull: {
+                    downVotes: {id: {$eq: user._id}},
+                },
+            }).exec();
+        }
+
+        if (vote.vote === '-1') {
+            await this.CommentModel.updateOne({_id: Types.ObjectId(commentId)}, {
+                $addToSet: {
+                    downVotes: {id: user._id, name: user.name},
+                },
+                $pull: {
+                    upVotes: {id: {$eq: user._id}},
+                },
+            }).exec();
+        }
+
+        // todo probably a better way to do this
+        // todo this has no children
+        return await this.CommentModel.findById(Types.ObjectId(commentId)).exec();
+    }
+
+
     async updateComment(commentId: string, comment: IComment, user: IUser): Promise<boolean> {
 
         const oldComment: IComment = await this.CommentModel.findById(Types.ObjectId(commentId)).exec();
