@@ -9,6 +9,7 @@ import {JwtPayload} from './interfaces/jwt-payload.interface';
 export class JwtStrategy extends PassportStrategy(Strategy) {
 
     /**
+     * https://github.com/nestjs/jwt
      * https://github.com/nielsmeima/nestjs-angular-auth/blob/master/back-end/src/auth/jwt.strategy.ts
      */
     constructor(private readonly authService: AuthService) {

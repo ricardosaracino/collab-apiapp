@@ -1,7 +1,10 @@
-import {Controller, Get, Req, Res, UseGuards} from '@nestjs/common';
+import {Controller, Delete, Get, Req, Res, UseGuards} from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
-import {ApiBearerAuth, ApiUseTags} from '@nestjs/swagger';
+import {ApiBearerAuth, ApiOperation, ApiUseTags} from '@nestjs/swagger';
+import {IUser} from '../users/interfaces/user.interface';
+import {AuthService} from './auth.service';
 import {JwtAuthGuard} from './jwt-auth.guard';
+import {User} from './user.decorator';
 
 @ApiUseTags('Auth')
 @Controller('auth')
@@ -10,35 +13,47 @@ export class AuthController {
     /**
      * https://medium.com/@nielsmeima/auth-in-nest-js-and-angular-463525b6e071
      */
-    constructor() {
+    constructor(private readonly authService: AuthService) {
     }
 
     @Get('login')
     @UseGuards(AuthGuard('azure'))
-    login() {
-        // initiates the OAuth2 login flow
+    @ApiOperation({title: 'Initiates the OAuth2 login flow'})
+    public login() {
     }
 
     @Get('callback')
     @UseGuards(AuthGuard('azure'))
-    loginCallback(@Req() req, @Res() res) {
-        // handles the OAuth2 callback
-        const jwt: string = req.user.jwt;
+    @ApiOperation({title: 'Handles the OAuth2 callback', description: 'Redirects with id token to be used as Bearer'})
+    public loginCallback(@Req() req, @Res() res) {
+
+        const accessToken: string = req.user.accessToken;
+
+        const refreshToken: string = req.user.refreshToken;
 
         // can use for SWAGGER
-        console.log(jwt);
+        console.log(accessToken);
 
-        if (jwt) {
-            res.redirect(`http://localhost:4200/login/success/${jwt}?redirect=/topic/5d1c9b8e7badd01120b997f9/comments`);
+        console.log(refreshToken);
+
+        // todo get the refresh token out of the url
+        if (accessToken) {
+            res.redirect(`http://localhost:4200/login/success/${accessToken}/${refreshToken}?redirect=/topic/5d1c9b8e7badd01120b997f9/comments`);
         } else {
             res.redirect('http://localhost:4200/login/failure');
         }
     }
 
-    @Get('protected')
+    @Get('token/:refreshToken')
+    public token(@User() user: IUser) {
+
+    }
+
+    @Delete('token/:refreshToken')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    protectedResource() {
-        return 'JWT is working!';
+    @ApiOperation({title: 'Revokes Refresh Token'})
+    public async revokeRefreshToken(@User() user: IUser): Promise<void> {
+        await this.authService.revokeRefreshToken(user);
     }
 }

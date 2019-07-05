@@ -36,7 +36,7 @@ export class AzureStrategy extends PassportStrategy(Strategy, 'azure') {
                 provider: params.provider,
             };
 
-            done(null, {jwt: await this.authService.validateOAuthLogin(oauthUser)});
+            done(null, await this.authService.validateOAuthLogin(oauthUser));
 
         } catch (err) {
             done(err, false);

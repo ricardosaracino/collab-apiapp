@@ -118,7 +118,6 @@ export class TopicsService {
         return await this.CommentModel.findById(Types.ObjectId(commentId)).exec();
     }
 
-
     async updateComment(commentId: string, comment: IComment, user: IUser): Promise<boolean> {
 
         const oldComment: IComment = await this.CommentModel.findById(Types.ObjectId(commentId)).exec();

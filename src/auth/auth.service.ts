@@ -1,5 +1,6 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common';
 import {JwtService} from '@nestjs/jwt';
+import {uid} from 'rand-token';
 import {IUser} from '../users/interfaces/user.interface';
 import {UsersService} from '../users/users.service';
 
@@ -17,15 +18,20 @@ export class AuthService {
     /**
      * returns JWT IUser object
      */
-    public async validateOAuthLogin(oauthUser: IUser): Promise<string> {
+    public async validateOAuthLogin(oauthUser: IUser): Promise<{ accessToken: string, refreshToken: string }> {
         try {
+
             let user: IUser = await this.usersService.findOneByThirdPartyId(oauthUser.thirdPartyId);
 
             if (!user) {
                 user = await this.usersService.registerOAuthUser(oauthUser);
             }
 
-            return this.jwtService.signAsync((user as any).toObject()); // await if not returning
+            const accessToken = await this.jwtService.signAsync((user as any).toObject());
+
+            const refreshToken = await this.issueRefreshToken(user);
+
+            return {accessToken, refreshToken};
 
         } catch (err) {
             throw new InternalServerErrorException('validateOAuthLogin', err.message);
@@ -37,5 +43,28 @@ export class AuthService {
         console.log(payload);
 
         return payload;
+    }
+
+
+    /**
+     * https://stackoverflow.com/questions/26739167/jwt-json-web-token-automatic-prolongation-of-expiration
+     * https://solidgeargroup.com/refresh-token-with-jwt-authentication-node-js
+     */
+    public async issueRefreshToken(user: IUser) {
+
+        const token = uid(16);
+
+        await this.usersService.setUserRefreshToken(user, token);
+
+        return token;
+    }
+
+    public async validateRefreshToken(user: IUser, token) {
+        await this.usersService.findUserRefreshToken(user, token);
+    }
+
+    public async revokeRefreshToken(user: IUser) {
+
+        await this.usersService.deleteUserRefreshToken(user);
     }
 }
