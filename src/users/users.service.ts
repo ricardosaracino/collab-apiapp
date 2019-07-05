@@ -27,7 +27,7 @@ export class UsersService {
 
         const refreshTokenHash = passwordHash.generate(refreshToken);
 
-        await this.RefreshTokenModel.updateOne({user_id: Types.ObjectId(user._id)}, {refreshTokenHash}).exec();
+        await this.RefreshTokenModel.updateOne({user_id: Types.ObjectId(user._id)}, {refreshTokenHash}, {upsert: true}).exec();
     }
 
     async findUserRefreshToken(user: IUser, refreshToken: string): Promise<void> {

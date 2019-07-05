@@ -43,12 +43,25 @@ export class TopicsService {
 
     async createComment(topicId: string, comment: IComment, user: IUser): Promise<IComment> {
 
+        // todo exists
+        const topicExists = await this.TopicModel.findById(Types.ObjectId(topicId)).select({_id: 1}).then(doc => !!doc);
+
+        if (!topicExists) {
+            throw new NotFoundException();
+        }
+
         const createdComment = new this.CommentModel({
             ...{topic_id: Types.ObjectId(topicId)},
             ...comment,
             ...{createdBy: {id: Types.ObjectId(user._id), name: user.name}},
 
         });
+
+        const res = await this.TopicModel.updateOne({_id: Types.ObjectId(topicId)}, {
+            $push: {
+                comments: {$each: [createdComment._id], $position: 0},
+            },
+        }).exec();
 
         return await createdComment.save();
     }

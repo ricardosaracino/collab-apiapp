@@ -38,7 +38,7 @@ export class AuthController {
 
         // todo get the refresh token out of the url
         if (accessToken) {
-            res.redirect(`http://localhost:4200/login/success/${accessToken}/${refreshToken}?redirect=/topic/5d1c9b8e7badd01120b997f9/comments`);
+            res.redirect(`http://localhost:4200/login/success/${accessToken}/${refreshToken}?redirect=/topics`);
         } else {
             res.redirect('http://localhost:4200/login/failure');
         }
