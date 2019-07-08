@@ -1,8 +1,9 @@
-import {Controller, Delete, Get, Req, Res, UseGuards} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Post, Req, Res, UseGuards} from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
 import {ApiBearerAuth, ApiOperation, ApiUseTags} from '@nestjs/swagger';
 import {IUser} from '../users/interfaces/user.interface';
 import {AuthService} from './auth.service';
+import {RefreshTokenDto} from './dto/refresh-token.dto';
 import {JwtAuthGuard} from './jwt-auth.guard';
 import {User} from './user.decorator';
 
@@ -27,26 +28,29 @@ export class AuthController {
     @ApiOperation({title: 'Handles the OAuth2 callback', description: 'Redirects with id token to be used as Bearer'})
     public loginCallback(@Req() req, @Res() res) {
 
-        const accessToken: string = req.user.accessToken;
+        const authToken: string = req.user.authToken;
 
         const refreshToken: string = req.user.refreshToken;
 
         // can use for SWAGGER
-        console.log(accessToken);
+        console.log(authToken);
 
         console.log(refreshToken);
 
         // todo get the refresh token out of the url
-        if (accessToken) {
-            res.redirect(`http://localhost:4200/login/success/${accessToken}/${refreshToken}?redirect=/topics`);
+        if (authToken) {
+            res.redirect(`http://localhost:4200/login/success/${authToken}/${refreshToken}?redirect=/topics`);
         } else {
             res.redirect('http://localhost:4200/login/failure');
         }
     }
 
-    @Get('token/:refreshToken')
-    public token(@User() user: IUser) {
+    @Post('refresh')
+    public async refreshAuthToken(@Body() body: RefreshTokenDto) {
 
+        console.log('here');
+
+        return await this.authService.issueAuthToken(body.refreshToken);
     }
 
     @Delete('token/:refreshToken')

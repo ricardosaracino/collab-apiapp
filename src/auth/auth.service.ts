@@ -1,6 +1,7 @@
 import {Injectable, InternalServerErrorException} from '@nestjs/common';
 import {JwtService} from '@nestjs/jwt';
 import {uid} from 'rand-token';
+import {IRefreshToken} from '../users/interfaces/refresh-token.interface';
 import {IUser} from '../users/interfaces/user.interface';
 import {UsersService} from '../users/users.service';
 
@@ -18,20 +19,20 @@ export class AuthService {
     /**
      * returns JWT IUser object
      */
-    public async validateOAuthLogin(oauthUser: IUser): Promise<{ accessToken: string, refreshToken: string }> {
+    public async validateOAuthLogin(oauthUser: IUser): Promise<{ authToken: string, refreshToken: string }> {
         try {
 
             let user: IUser = await this.usersService.findOneByThirdPartyId(oauthUser.thirdPartyId);
 
             if (!user) {
-                user = await this.usersService.registerOAuthUser(oauthUser);
+                user = await this.usersService.createUser(oauthUser);
             }
 
-            const accessToken = await this.jwtService.signAsync((user as any).toObject());
+            const authToken = await this.jwtService.signAsync((user as any).toObject());
 
             const refreshToken = await this.issueRefreshToken(user);
 
-            return {accessToken, refreshToken};
+            return {authToken, refreshToken};
 
         } catch (err) {
             throw new InternalServerErrorException('validateOAuthLogin', err.message);
@@ -44,6 +45,28 @@ export class AuthService {
 
         return payload;
     }
+
+
+    public async issueAuthToken(refreshToken: string): Promise<{ authToken: string, refreshToken: string }> {
+        try {
+
+            const refreshTokenUser: IRefreshToken = await this.usersService.findUserRefreshToken(refreshToken);
+
+            if (!refreshTokenUser) {
+                return null; //todo
+            }
+
+            const user = await this.usersService.findUserById(refreshTokenUser.user_id);
+
+            const authToken = await this.jwtService.signAsync((user as any).toObject());
+
+            return {authToken, refreshToken};
+
+        } catch (err) {
+            throw new InternalServerErrorException('issueAuthToken', err.message);
+        }
+    }
+
 
 
     /**
@@ -59,8 +82,8 @@ export class AuthService {
         return token;
     }
 
-    public async validateRefreshToken(user: IUser, token) {
-        await this.usersService.findUserRefreshToken(user, token);
+    public async validateRefreshToken(token) {
+        await this.usersService.findUserRefreshToken(token);
     }
 
     public async revokeRefreshToken(user: IUser) {
